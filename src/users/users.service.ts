@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { NotFoundException } from '@nestjs/common';
 
 @Injectable()
 export class UsersService {
@@ -11,13 +12,24 @@ export class UsersService {
 
   findAll(role?: 'INTERN' | 'ENGINEER' | 'ADMIN') {
     if (role) {
-      return this.users.filter((user) => user.role === role);
+      const users = this.users.filter((user) => user.role === role);
+
+      if (users.length === 0) {
+        throw new NotFoundException(`No user with role ${role} found`);
+      }
+      return users;
     }
     return this.users;
   }
 
   findOne(id: number) {
-    return this.users.find((user) => user.id === id);
+    const user = this.users.find((user) => user.id === id);
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+
+    return user;
   }
 
   create(user: CreateUserDto) {
@@ -28,6 +40,11 @@ export class UsersService {
 
   update(id: number, userUpdate: UpdateUserDto) {
     const userIndex = this.users.findIndex((user) => user.id === id);
+
+    if (userIndex === -1) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+
     this.users[userIndex] = {
       id: id,
       email: userUpdate.email ?? this.users[userIndex].email,
@@ -39,6 +56,11 @@ export class UsersService {
 
   delete(id: number) {
     const userIndex = this.users.findIndex((user) => user.id === id);
+
+    if (userIndex === -1) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+
     const user = this.users[userIndex];
     this.users = this.users.filter((user) => user.id !== id);
 
